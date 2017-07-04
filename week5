@@ -1,0 +1,90 @@
+
+
+****************************** WH 5.1
+
+use blog
+db.dropDatabase()
+mongoimport --drop -d blog -c posts D:\MongoDB\week5\posts.json
+
+
+db.posts.aggregate([
+	{$unwind:"$comments"},
+	{$group: {'_id': "$comments.author", 'count': {$sum: 1} }},
+	{$sort: {'count': -1}},
+	{$limit : 5},
+	{$project : {_id:0, 'author':'$_id', 'count':1}}
+])
+
+
+
+****************************** WH 5.2
+
+mongoimport --drop -d test -c zips D:\MongoDB\week5\small_zips.json
+
+
+db.zips.aggregate([
+	{$group: {'_id': {'state':"$state", 'city':"$city"}, pop:{$sum: "$pop"} }},
+	{$match: {'_id.state': {$in: ["CA","NY"]},'pop': {$gt : 25000}}},
+	{$group: {'_id' : null, "average_pop": {"$avg" : "$pop"} }}
+])
+
+
+****************************** WH 5.3
+
+mongoimport --drop -d test -c grades D:\MongoDB\week5\Small_grades_file\grades.json
+
+
+db.grades.aggregate([
+	{$unwind: '$scores'},
+	{$match: {'scores.type': {$in: ["exam","homework"]} }},
+	{$group: {'_id': {'class_id':'$class_id', 'student_id':'$student_id'},
+			  avg_student : {"$avg": "$scores.score"} }},
+	{$group: {'_id': '$_id.class_id', 
+			  avg_class : {"$avg": "$avg_student"} }},
+	{$sort: {'avg_class': -1} },
+	{$project: {_id:0, 'class_id': '$_id', avg_class : 1}}, 
+	{$limit: 1}
+])
+
+
+
+****************************** WH 5.4
+
+mongoimport --drop -d test -c zips D:\MongoDB\week5\zips.json
+
+db.zips.aggregate([
+	{$match: {'city': {$regex: '^[A-Z]'} }},
+	{$group: {'_id': null, population:{$sum: "$pop"} }},
+	{$project: {_id:0, "population": 1}}
+])
+
+
+db.zips.aggregate([
+	{$project: {_id:1, first_char: {$substr : ["$city",0,1]}, pop:1 }}, 
+    {$match: {'first_char': {$in: ['0','1','2','3','4','5','6','7','8','9']} }},
+	{$group: {'_id': null, population:{$sum: "$pop"} }},
+	{$project: {_id:0, "population": 1}}
+])
+
+
+db.zips.aggregate([
+    { $project: { _id: 0, city: 1, pop: 1 } },
+    { $match: { city: /^\d.*/' } },
+    { $group: { _id: null, pop: { $sum: "$pop" } } },
+    { $sort: { city: 1} }
+])
+
+
+db.zips.aggregate([
+    {$project: { first_char: {$substr: ["$city",0,1]}, pop:1, city:1 }},
+    {$match: { first_char: {$in:['0’,'1’,'2’,'3’,'4’,'5’,'6’,'7’,'8’,'9’]} }},
+    {$group: { _id: "totalPop", total:{$sum:"$pop"} }}
+])
+
+
+db.zips.aggregate([
+	{$project: {_id:1, first_char: {$substr : ["$city",0,1]}, pop:1 }}, 
+	{$match: {'first_char': {$in: ['0','1','2','3','4','5','6','7','8','9']} }},	
+	{$group: {'_id': null, population:{$sum: "$pop"} }},
+	{$project: {_id:0, "population": 1}}
+])
